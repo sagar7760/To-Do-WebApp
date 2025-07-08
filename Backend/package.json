@@ -1,0 +1,19 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "To-do Web app",
+  "main": "server.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sagar7760/To-Do-WebApp.git"
+  },
+  "author": "Sagar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sagar7760/To-Do-WebApp/issues"
+  },
+  "homepage": "https://github.com/sagar7760/To-Do-WebApp#readme"
+}
