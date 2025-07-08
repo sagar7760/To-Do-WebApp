@@ -1,4 +1,4 @@
-## This is a MERN stack Web App to manage our Daily task
+## This is a MERN stack Web App to manage our Daily tasks
  - MongoDB 
  - React and Tailwind CSS 
  - Express.js
