@@ -1,10 +1,26 @@
 const express = require('express');
 const connectDB = require('./config/db');
 const { db } = require('./models/userModel');
-require('dotenv').config();
-const app = express();
+const cors=require('cors');
+const morgan = require('morgan');
 
+// Initialize express app and connect to MongoDB
+// This is a Node.js server using Express and MongoDB for a To-Do application.
+// It connects to the database and sets up the server to listen on a specified port.
+const app = express();
+require('dotenv').config();
 connectDB();
+
+app.use(express.json());
+if(process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'));
+} else {
+    app.use(morgan('combined'));
+}
+
+// Routes
+app.use(cors());
+app.use('/api/users',require('./routes/userRoutes'));
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
