@@ -22,7 +22,7 @@ exports.createTodo=async(req,res)=>{
     }
 }
 
-// Get acti///////////////ve todo for user
+// Get active todos for user
 exports.getTodos=async(req,res)=>{
     try{
         const todos=await Todo.find({
@@ -60,8 +60,113 @@ exports.getCompletedTodos=async(req,res)=>{
     }
 }
 
-//mark todo as completed
-// exports.completeTodo=async(req,res)=>{
-//     const{id}=req.params;
-//     try
-// }
+// mark todo as completed
+exports.completeTodo=async(req,res)=>{
+    const{id}=req.params;
+    try{
+        const todo=await Todo.findByIdAndUpdate(id,{
+            completed:true
+        },{
+            new:true
+        });
+        if(!todo){
+            return res.status(404).json({
+                message:"Todo not found"
+            });
+        }
+    }catch (error) {
+        return res.status(500).json({
+            message:"Error completing todo",
+            error:error.message
+        });
+    }
+}
+//mark todo as uncompleted
+exports.uncompleteTodo=async(req,res)=>{
+    const {id}=req.params;      
+try{
+    const todo=await Todo.findByIdAndUpdate(id,{
+        completed:false
+    },{ 
+        new:true 
+    });
+    if(!todo){
+        return res.status(404).json({
+            message:"Todo not found"
+        });
+    }
+    res.status(200).json({
+        message:"Todo marked as uncompleted",
+        todo
+    });
+    }catch (error) {
+        return res.status(500).json({
+            message:"Error marking todo as uncompleted",
+            error:error.message
+            });
+    }   
+}
+// Update a todo
+exports.updateTodo=async(req,res)=>{
+    const {id}=req.params;
+    const {title,description,dueDate}=req.body;
+    try{
+        const todo=await Todo.findByIdAndUpdate(id,{
+            title,
+            description,
+            dueDate
+        },{
+            new:true
+        });
+        if(!todo){
+            return res.status(404).json({
+                message:"Todo not found"
+            });
+        }
+        res.status(200).json({
+            message:"Todo updated successfully",
+            todo
+        });
+    }catch (error) {
+        res.status(500).json({
+            message:"Error updating todo",  
+            error:error.message
+        });
+    }
+}
+
+//soft delete todo
+exports.deleteTodo=async(req,res)=>{
+    const {id}=req.params;
+    try{
+        const todo=await Todo.findByIdAndUpdate(id,{
+            deleted:true},
+            {
+                new:true
+            })
+        }catch (error) {
+        return res.status(500).json({
+            message:"Error deleting todo",
+            error:error.message
+        });
+    }
+}
+
+
+//peremanently delete todo
+exports.peramanentlyDeleteTodo=async(res,req)=>{
+    const {id}=req.params;
+    try{
+        const todo=await Todo.findByIdAndDlete(id);
+        if(!todo){
+            return res.status(404).json({
+                message:"Todo not found"
+            });
+        }
+    }catch (error) {
+        return res.status(500).json({
+            message:"Error permanently deleting todo",
+            error:error.message
+        });
+    }
+}

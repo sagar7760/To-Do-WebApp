@@ -1,6 +1,6 @@
 const express = require('express');
 const connectDB = require('./config/db');
-const { db } = require('./models/userModel');
+// const { db } = require('./models/userModel');
 const cors=require('cors');
 const morgan = require('morgan');
 const errorHandler = require('./middleware/errorHandler');
@@ -21,7 +21,12 @@ if(process.env.NODE_ENV === 'development') {
 
 // Routes
 app.use(cors());
-app.use('/api/users',require('./routes/userRoutes'));
+//user authentication routes
+app.use('/api/auth', require('./routes/auth'));
+
+//todo management routes
+app.use('/api/todos', require('./routes/todos'));
+// app.use('/api/users',require('./routes/userRoutes'));
 
 //custon error handler
 app.use(errorHandler);
