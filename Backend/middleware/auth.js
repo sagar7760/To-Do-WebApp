@@ -1,40 +1,43 @@
-const jwt=require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
-const { token } = require('morgan');
-// const asyncHandler = require('express-async-handler');
 
-// Middleware to authenticate user
-const protect=async(req,res,next)=>{
-    let token;
-    if(req.headers.autharization&&req.headers.autharization.startsWith('Bearer'))
+const protect = async (req, res, next) => {
+   let token;
+    
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
-            token=req.headers.autharization.split(' ')[1];
-            const decoded=jwt.verify(token,process.env.JWT_SECRET);
-            req.user=User.findById(decoded.id).select('-password');
-            next();
-        }catch (error) {
-            res.status(401).json({
-                message:"Access Denied, Not Authorized",
-                error:error.message
+            // Extract token
+            token = req.headers.authorization.split(' ')[1];
+            console.log('Extracted token:', token);
+            
+            // Verify token
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            
+            // Find user by ID from token
+            req.user = await User.findById(decoded.id).select('-password');
+            
+            // Check if user exists
+            if (!req.user) {
+                console.log('User not found in database');
+                return res.status(401).json({ message: "User not found" });
+            }
+            
+            console.log('User successfully set:', req.user._id);
+            next(); // Continue to the next middleware/controller
+            
+        } catch (error) {
+            console.log('JWT verification error:', error.message);
+            return res.status(401).json({ 
+                message: "Access Denied, Not Authorized", 
+                error: error.message 
             });
-        }   
-}
+        }
+    } else {
+        console.log('No Bearer token found in headers');
+        return res.status(401).json({ 
+            message: "Access Denied, No Token Provided" 
+        });
+    }
+};
 
-if(!token) {
-    res.status(401).json({
-        message:"Access Denied, No Token Provided"
-    });
-}
-
-// Middleware to check if user is admin
-// const isAdmin=(req,res,next)=>{
-//     if(req.user&&req.user.isAdmin) {
-//         next();
-//     } else {
-//         res.status(403).json({
-//             message:"Access Denied, Not Authorized as Admin"
-//         });
-//     }
-// }
-
-module.exports=protect;
+module.exports = protect;

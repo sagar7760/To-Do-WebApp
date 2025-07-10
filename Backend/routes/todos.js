@@ -1,8 +1,8 @@
 const exoress = require('express');
 const router = exoress.Router();
-const { createTodo, getTodos, getCompletedTodos, updateTodo, deleteTodo, peramanentlyDeleteTodo,uncompleteTodo,completeTodo } = require('../controllers/todoController');
+const { createTodo, getTodos, getCompletedTodos, updateTodo, deleteTodo, permanentlyDeleteTodo,uncompleteTodo,completeTodo,undoDeleteTodo } = require('../controllers/todoController');
 const protect = require('../middleware/auth');
-// const { protect } = require('../middleware/auth');
+
 
 router.use(protect);
 
@@ -20,8 +20,12 @@ router.put('/:id',updateTodo);
 // Route to delete a todo (soft delete)
 router.put('/delete/:id',deleteTodo);
 
+// undo a soft delete 
+router.put('/undo/:id',undoDeleteTodo);
+
 // Route to permanently delete a todo
-router.delete('/:id',peramanentlyDeleteTodo);
+router.delete('/:id',permanentlyDeleteTodo);
+
 
 // Route to mark a todo as completed
 router.put('/complete/:id',completeTodo);

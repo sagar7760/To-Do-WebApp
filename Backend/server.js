@@ -24,7 +24,7 @@ app.use(cors());
 //user authentication routes
 app.use('/api/auth', require('./routes/auth'));
 
-// Todo management routes
+
 app.use('/api/todos', require('./routes/todos'));
 // app.use('/api/users',require('./routes/userRoutes'));
 
