@@ -34,7 +34,7 @@ exports.getTodos=async(req,res)=>{
             todos
         })
     }catch (error) {
-        res.stasus(500).json({
+        res.status(500).json({
             message:"Error fetching todos",
             error:error.message
         });
@@ -61,23 +61,27 @@ exports.getCompletedTodos=async(req,res)=>{
 }
 
 // mark todo as completed
-exports.completeTodo=async(req,res)=>{
-    const{id}=req.params;
-    try{
-        const todo=await Todo.findByIdAndUpdate(id,{
-            completed:true
-        },{
-            new:true
+exports.completeTodo = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const todo = await Todo.findByIdAndUpdate(id, {
+            completed: true
+        }, {
+            new: true
         });
-        if(!todo){
+        if (!todo) {
             return res.status(404).json({
-                message:"Todo not found"
+                message: "Todo not found"
             });
         }
-    }catch (error) {
+        res.status(200).json({
+            message: "Todo marked as completed",
+            todo
+        });
+    } catch (error) {
         return res.status(500).json({
-            message:"Error completing todo",
-            error:error.message
+            message: "Error completing todo",
+            error: error.message
         });
     }
 }
@@ -153,11 +157,11 @@ exports.deleteTodo=async(req,res)=>{
 }
 
 
-//peremanently delete todo
-exports.peramanentlyDeleteTodo=async(res,req)=>{
+//peramanently delete todo
+exports.peramanentlyDeleteTodo=async(req,res)=>{
     const {id}=req.params;
     try{
-        const todo=await Todo.findByIdAndDlete(id);
+        const todo=await Todo.findByIdAndDelete(id);
         if(!todo){
             return res.status(404).json({
                 message:"Todo not found"

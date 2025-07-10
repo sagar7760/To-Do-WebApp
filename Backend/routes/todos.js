@@ -2,6 +2,7 @@ const exoress = require('express');
 const router = exoress.Router();
 const { createTodo, getTodos, getCompletedTodos, updateTodo, deleteTodo, peramanentlyDeleteTodo,uncompleteTodo,completeTodo } = require('../controllers/todoController');
 const protect = require('../middleware/auth');
+// const { protect } = require('../middleware/auth');
 
 router.use(protect);
 
@@ -12,8 +13,7 @@ router.post('/',createTodo);
 router.get('/',getTodos);
 
 // Route to get completed todos for user
-router.get('/completed',getCompletedTodos);
-
+router.get('/completed',getCompletedTodos)
 // Route to update a todo
 router.put('/:id',updateTodo);
 

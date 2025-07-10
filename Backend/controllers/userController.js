@@ -7,7 +7,7 @@ exports.registerNewUser=async(req,res)=>{
     const {name,email,password}=req.body;
     try{
         // Check if user already exists
-        const userExists=await User.find({email});
+        const userExists=await User.findOne({email});
         if(userExists) return res.status(400).json({
             message:"User already exists"
         });
@@ -28,7 +28,7 @@ exports.registerNewUser=async(req,res)=>{
 
         // Generate JWT token
         // The token is signed with the user's ID and a secret key, and it expires after a specified time.
-        const token=jwt.sign({id:user._id},process.env.JWT_SECRET,process.env.JWT_EXPIRE);
+        const token=jwt.sign({id:user._id},process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE});
 
         res.status(201).json({
             _id:user._id,
@@ -60,7 +60,11 @@ exports.loginUser=async(req,res)=>{
         });
 
         // Generate JWT token
-        const token=jwt.sign({id:user._id}.pprocess.en.JWT_SECRET,process.env.JWT_EXPIRE);
+        const token=jwt.sign(
+            {id:user._id},
+            process.env.JWT_SECRET,
+            {expiresIn:process.env.JWT_EXPIRE}
+        );
 
         res.status(200).json({
             _id:user._id,
