@@ -1,14 +1,18 @@
 import { useState } from 'react'
-
+import Homepage from './components/homepage'
 import './App.css'
+import Navbar from './components/navbar';
 
 function App() {
+   const [darkMode, setDarkMode] = useState(false);
 
+    const toggleDarkMode = () => {
+        setDarkMode(!darkMode);
+    };
   return (
     <>
-      <div className="bg-slate-900 w-auto h-auto">
-      <h1 className="text-3xl">Welcome to To-Do web app</h1>
-      </div>
+      <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+      <Homepage darkMode={darkMode} />
     </>
   )
 }
