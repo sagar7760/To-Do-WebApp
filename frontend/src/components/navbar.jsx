@@ -10,7 +10,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
                             <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                 Smart To-Do
+                                 Taskly
                             </h1>
                         </div>
                     </div>
