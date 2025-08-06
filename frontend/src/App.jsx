@@ -29,7 +29,7 @@ function App() {
         </>
       )}
       {currentPage === 'todo' && (
-        <TodoPage darkMode={darkMode} onBackToHome={navigateToHome} />
+        <TodoPage darkMode={darkMode} setDarkMode={setDarkMode} onBackToHome={navigateToHome} />
       )}
     </>
   )
