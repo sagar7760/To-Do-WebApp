@@ -3,7 +3,7 @@ const Todo = require('../models/todoModel');
 // Create a new todo
 exports.createTodo = async (req, res) => {
 
-    const { title, description, dueDate } = req.body;
+    const { title, dueDate } = req.body;
     
     if (!req.user) {
         console.log('ERROR: req.user is undefined');
@@ -19,7 +19,6 @@ exports.createTodo = async (req, res) => {
         console.log('Creating todo with userId:', req.user._id);
         const todo = await Todo.create({
             title,
-            description,
             dueDate,
             userId: req.user._id
         });
@@ -133,11 +132,10 @@ exports.getCompletedTodos=async(req,res)=>{
 // Update a todo
 exports.updateTodo=async(req,res)=>{
     const {id}=req.params;
-    const {title,description,dueDate}=req.body;
+    const {title,dueDate}=req.body;
     try{
         const todo=await Todo.findByIdAndUpdate(id,{
             title,
-            description,
             dueDate
         },{
             new:true
@@ -185,6 +183,25 @@ exports.deleteTodo=async(req,res)=>{
         });
     }
 }
+
+// Get deleted todos for user
+exports.getDeletedTodos = async (req, res) => {
+    try {   
+        const todos = await Todo.find({
+            userId: req.user._id,
+            deleted: true
+        }).sort({ createdAt: -1 });
+        res.status(200).json({
+            todos
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error fetching deleted todos",
+            error: error.message
+        });
+    }
+}
+
 //undo soft delete todo
 exports.undoDeleteTodo=async(req,res)=>{
     const {id}=req.params;
@@ -212,7 +229,7 @@ exports.undoDeleteTodo=async(req,res)=>{
 }
 
 //peramanently delete todo
-exports.permanentlyDeleteTodo = async (req, res) => {
+    exports.permanentlyDeleteTodo = async (req, res) => {
     const { id } = req.params;
     try {
         const todo = await Todo.findByIdAndDelete(id);
@@ -229,6 +246,24 @@ exports.permanentlyDeleteTodo = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             message: "Error permanently deleting todo",
+            error: error.message
+        });
+    }
+}
+
+// Get all todos for user (including completed and deleted)
+exports.getAllTodos = async (req, res) => {
+    try {
+        const todos = await Todo.find({
+            userId: req.user._id
+        }).sort({ createdAt: -1 });
+        
+        res.status(200).json({
+            todos
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error fetching all todos",
             error: error.message
         });
     }

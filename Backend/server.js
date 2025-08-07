@@ -13,6 +13,13 @@ require('dotenv').config();
 connectDB();
 
 app.use(express.json());
+
+// CORS configuration
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    credentials: true
+}));
+
 if(process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 } else {
@@ -20,7 +27,6 @@ if(process.env.NODE_ENV === 'development') {
 }
 
 // Routes
-app.use(cors());
 //user authentication routes
 app.use('/api/auth', require('./routes/auth'));
 
