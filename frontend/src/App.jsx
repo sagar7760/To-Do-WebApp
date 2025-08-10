@@ -5,7 +5,7 @@ import './App.css'
 import Navbar from './components/navbar';
 
 function App() {
-   const [darkMode, setDarkMode] = useState(false);
+   const [darkMode, setDarkMode] = useState(true);
    const [currentPage, setCurrentPage] = useState('home'); // 'home' or 'todo'
 
     const toggleDarkMode = () => {
