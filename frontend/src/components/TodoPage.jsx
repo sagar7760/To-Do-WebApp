@@ -9,6 +9,7 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
   const [error, setError] = useState(null);
   const [showAddInput, setShowAddInput] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Load tasks on component mount only
   useEffect(() => {
@@ -193,98 +194,157 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
           </div>
         )}
 
-      <div className="flex">
+      <div className="flex h-screen overflow-hidden">
+        {/* Mobile sidebar backdrop */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
-        <div className={`w-64 h-screen ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg transition-colors duration-300`}>
-          <div className="px-3 py-6">
-            <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-6`}>
-              Task Manager
-            </h2>
-            
-            <nav className="space-y-1">
-              {/* All Tasks */}
+        <div className={`
+          fixed lg:relative lg:translate-x-0 inset-y-0 left-0 z-50 
+          w-64 transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${darkMode ? 'bg-gray-800' : 'bg-white'} 
+          shadow-lg lg:shadow-none
+        `}>
+          <div className="flex flex-col h-full">
+            {/* Mobile close button */}
+            <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Task Manager
+              </h2>
               <button
-                onClick={() => setActiveTab('all')}
-                className={`w-full flex items-center justify-between px-2 py-3 rounded-lg text-left transition-colors duration-200 ${
-                  activeTab === 'all'
-                    ? darkMode ? 'bg-gray-700 text-white border-l-4 border-purple-500' : 'bg-gray-200 text-gray-900 border-l-4 border-purple-500'
-                    : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                onClick={() => setSidebarOpen(false)}
+                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
               >
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  Tasks
-                </div>
-                <span className={`text-sm px-2 py-1 rounded-full ${
-                  activeTab === 'all'
-                    ? darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'
-                    : darkMode ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  {getTaskCount('all')}
-                </span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
+            </div>
 
-              {/* Completed */}
-              <button
-                onClick={() => setActiveTab('completed')}
-                className={`w-full flex items-center justify-between px-2 py-3 rounded-lg text-left transition-colors duration-200 ${
-                  activeTab === 'completed'
-                    ? darkMode ? 'bg-gray-700 text-white border-l-4 border-purple-500' : 'bg-gray-300 text-gray-900 border-l-4 border-purple-500'
-                    : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Completed
-                </div>
-                <span className={`text-sm px-2 py-1 rounded-full ${
-                  activeTab === 'completed'
-                    ? darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-300 text-gray-700'
-                    : darkMode ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  {getTaskCount('completed')}
-                </span>
-              </button>
+            <div className="flex-1 px-3 py-6 overflow-y-auto">
+              <h2 className={`hidden lg:block text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-6`}>
+                Task Manager
+              </h2>
+              
+              <nav className="space-y-1">
+                {/* All Tasks */}
+                <button
+                  onClick={() => {
+                    setActiveTab('all');
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                    activeTab === 'all'
+                      ? darkMode ? 'bg-gray-700 text-white border-l-4 border-blue-500' : 'bg-gray-200 text-gray-900 border-l-4 border-blue-500'
+                      : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Tasks
+                  </div>
+                  <span className={`text-sm px-2 py-1 rounded-full ${
+                    activeTab === 'all'
+                      ? darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'
+                      : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}>
+                    {getTaskCount('all')}
+                  </span>
+                </button>
 
-              {/* Bin */}
-              <button
-                onClick={() => setActiveTab('bin')}
-                className={`w-full flex items-center justify-between px-2 py-3 rounded-lg text-left transition-colors duration-200 ${
-                  activeTab === 'bin'
-                    ? darkMode ? 'bg-gray-700 text-white border-l-4 border-purple-500' : 'bg-gray-300 text-gray-900 border-l-4 border-purple-500'
-                    : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Bin
-                </div>
-                <span className={`text-sm px-2 py-1 rounded-full ${
-                  activeTab === 'bin'
-                    ? darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-300 text-gray-700'
-                    : darkMode ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  {getTaskCount('bin')}
-                </span>
-              </button>
-            </nav>
+                {/* Completed */}
+                <button
+                  onClick={() => {
+                    setActiveTab('completed');
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                    activeTab === 'completed'
+                      ? darkMode ? 'bg-gray-700 text-white border-l-4 border-blue-500' : 'bg-gray-200 text-gray-900 border-l-4 border-blue-500'
+                      : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Completed
+                  </div>
+                  <span className={`text-sm px-2 py-1 rounded-full ${
+                    activeTab === 'completed'
+                      ? darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'
+                      : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}>
+                    {getTaskCount('completed')}
+                  </span>
+                </button>
+
+                {/* Bin */}
+                <button
+                  onClick={() => {
+                    setActiveTab('bin');
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                    activeTab === 'bin'
+                      ? darkMode ? 'bg-gray-700 text-white border-l-4 border-blue-500' : 'bg-gray-200 text-gray-900 border-l-4 border-blue-500'
+                      : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Bin
+                  </div>
+                  <span className={`text-sm px-2 py-1 rounded-full ${
+                    activeTab === 'bin'
+                      ? darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'
+                      : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}>
+                    {getTaskCount('bin')}
+                  </span>
+                </button>
+              </nav>
+            </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-8`}>
+        <div className="flex-1 flex flex-col min-h-0 lg:ml-0">
+          {/* Mobile header */}
+          <div className={`lg:hidden flex items-center justify-between p-4 border-b ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'}`}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h1 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               {activeTab === 'all' && 'My Tasks'}
-              {activeTab === 'completed' && 'Completed Tasks'}
-              {activeTab === 'bin' && 'Deleted Tasks'}
+              {activeTab === 'completed' && 'Completed'}
+              {activeTab === 'bin' && 'Bin'}
             </h1>
+            <div className="w-10"></div> {/* Spacer for centering */}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+            <div className="max-w-4xl mx-auto">
+              <h1 className={`hidden lg:block text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-8`}>
+                {activeTab === 'all' && 'My Tasks'}
+                {activeTab === 'completed' && 'Completed Tasks'}
+                {activeTab === 'bin' && 'Deleted Tasks'}
+              </h1>
 
             {/* Show loading state only in main content */}
             {loading ? (
@@ -410,12 +470,13 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
                 </div>
               </>
             )}
+            </div>
           </div>
         </div>
         
         {/* Fixed Add Task Input (only show for 'all' tab) */}
         {activeTab === 'all' && (
-          <div className="fixed bottom-0 left-64 right-0 z-40">
+          <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-40">
             <div className={`${darkMode ? 'bg-gray-900/95' : 'bg-gray-100/95'} backdrop-blur-sm border-t ${darkMode ? 'border-gray-700' : 'border-gray-300'} p-4`}>
               <div className="max-w-4xl mx-auto">
                 <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-3 shadow-sm transition-all duration-300`}>
@@ -434,7 +495,7 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
                         }}
                         placeholder="Task title"
                         autoFocus
-                        className={`flex-1 bg-transparent outline-none text-lg ${
+                        className={`flex-1 bg-transparent outline-none text-base lg:text-lg ${
                           darkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
                         }`}
                       />
@@ -465,7 +526,7 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
                       <svg className="w-5 h-5 text-purple-500 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
-                      <span className={`text-lg ${
+                      <span className={`text-base lg:text-lg ${
                         darkMode ? 'text-gray-400 group-hover:text-gray-300' : 'text-gray-500 group-hover:text-gray-600'
                       }`}>
                         Add a task

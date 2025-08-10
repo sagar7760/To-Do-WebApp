@@ -1,10 +1,24 @@
 import React, { useState } from 'react';
 
-const Navbar = ({ darkMode, toggleDarkMode, onBackToHome }) => {
+const Navbar = ({ darkMode, toggleDarkMode, onBackToHome, onLogin, onSignup }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
+    };
+
+    const handleLoginClick = () => {
+        if (onLogin) {
+            onLogin();
+        }
+        setIsMenuOpen(false);
+    };
+
+    const handleSignupClick = () => {
+        if (onSignup) {
+            onSignup();
+        }
+        setIsMenuOpen(false);
     };
     
     return (
@@ -39,22 +53,23 @@ const Navbar = ({ darkMode, toggleDarkMode, onBackToHome }) => {
                                 <>
                                     <a 
                                         href="#" 
+                                        onClick={onBackToHome}
                                         className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
                                     >
                                         Home
                                     </a>
-                                    <a 
-                                        href="#" 
+                                    <button 
+                                        onClick={handleLoginClick}
                                         className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
                                     >
                                         Login
-                                    </a>
-                                    <a 
-                                        href="#" 
+                                    </button>
+                                    <button 
+                                        onClick={handleSignupClick}
                                         className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
                                     >
                                         Signup
-                                    </a>
+                                    </button>
                                 </>
                             )}
                         </div>
@@ -120,25 +135,23 @@ const Navbar = ({ darkMode, toggleDarkMode, onBackToHome }) => {
                             <>
                                 <a 
                                     href="#" 
-                                    onClick={toggleMenu}
+                                    onClick={onBackToHome}
                                     className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} block px-3 py-2 text-base font-medium transition-colors duration-200`}
                                 >
                                     Home
                                 </a>
-                                <a 
-                                    href="#" 
-                                    onClick={toggleMenu}
-                                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200`}
+                                <button 
+                                    onClick={handleLoginClick}
+                                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
                                 >
                                     Login
-                                </a>
-                                <a 
-                                    href="#" 
-                                    onClick={toggleMenu}
-                                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200`}
+                                </button>
+                                <button 
+                                    onClick={handleSignupClick}
+                                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
                                 >
                                     Signup
-                                </a>
+                                </button>
                             </>
                         )}
                     </div>
