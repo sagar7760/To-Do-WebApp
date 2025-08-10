@@ -196,18 +196,18 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
       <div className="flex">
         {/* Sidebar */}
         <div className={`w-64 h-screen ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg transition-colors duration-300`}>
-          <div className="p-6">
+          <div className="px-3 py-6">
             <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-6`}>
               Task Manager
             </h2>
             
-            <nav className="space-y-2">
+            <nav className="space-y-1">
               {/* All Tasks */}
               <button
                 onClick={() => setActiveTab('all')}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                className={`w-full flex items-center justify-between px-2 py-3 rounded-lg text-left transition-colors duration-200 ${
                   activeTab === 'all'
-                    ? darkMode ? 'bg-purple-600 text-white' : 'bg-purple-600 text-white'
+                    ? darkMode ? 'bg-gray-700 text-white border-l-4 border-purple-500' : 'bg-gray-200 text-gray-900 border-l-4 border-purple-500'
                     : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -215,12 +215,12 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
-                  All Tasks
+                  Tasks
                 </div>
                 <span className={`text-sm px-2 py-1 rounded-full ${
                   activeTab === 'all'
-                    ? darkMode ? 'bg-purple-700' : 'bg-purple-700'
-                    : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                    ? darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'
+                    : darkMode ? 'bg-gray-800' : 'bg-gray-50'
                 }`}>
                   {getTaskCount('all')}
                 </span>
@@ -229,10 +229,10 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
               {/* Completed */}
               <button
                 onClick={() => setActiveTab('completed')}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                className={`w-full flex items-center justify-between px-2 py-3 rounded-lg text-left transition-colors duration-200 ${
                   activeTab === 'completed'
-                    ? darkMode ? 'bg-purple-600 text-white' : 'bg-purple-600 text-white'
-                    : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+                    ? darkMode ? 'bg-gray-700 text-white border-l-4 border-purple-500' : 'bg-gray-300 text-gray-900 border-l-4 border-purple-500'
+                    : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <div className="flex items-center">
@@ -243,8 +243,8 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
                 </div>
                 <span className={`text-sm px-2 py-1 rounded-full ${
                   activeTab === 'completed'
-                    ? darkMode ? 'bg-purple-700' : 'bg-purple-700'
-                    : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                    ? darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-300 text-gray-700'
+                    : darkMode ? 'bg-gray-800' : 'bg-gray-50'
                 }`}>
                   {getTaskCount('completed')}
                 </span>
@@ -253,9 +253,9 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
               {/* Bin */}
               <button
                 onClick={() => setActiveTab('bin')}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                className={`w-full flex items-center justify-between px-2 py-3 rounded-lg text-left transition-colors duration-200 ${
                   activeTab === 'bin'
-                    ? darkMode ? 'bg-purple-600 text-white' : 'bg-purple-600 text-white'
+                    ? darkMode ? 'bg-gray-700 text-white border-l-4 border-purple-500' : 'bg-gray-300 text-gray-900 border-l-4 border-purple-500'
                     : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -267,8 +267,8 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
                 </div>
                 <span className={`text-sm px-2 py-1 rounded-full ${
                   activeTab === 'bin'
-                    ? darkMode ? 'bg-purple-700' : 'bg-purple-700'
-                    : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                    ? darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-300 text-gray-700'
+                    : darkMode ? 'bg-gray-800' : 'bg-gray-50'
                 }`}>
                   {getTaskCount('bin')}
                 </span>
