@@ -1,4 +1,5 @@
 const Todo = require('../models/todoModel');
+const { cleanupOldDeletedTodos } = require('../services/cleanupService');
 
 // Create a new todo
 exports.createTodo = async (req, res) => {
@@ -162,21 +163,22 @@ exports.deleteTodo=async(req,res)=>{
     const {id}=req.params;
     try{
         const todo=await Todo.findByIdAndUpdate(id,{
-            deleted:true},
-            {
-                new:true
-            })
-            if(!todo){
-                return res.status(404).json({
-                    message:"Todo not found"
-                });
-            }
-            // ADD THIS RESPONSE
-            res.status(200).json({
-                message: "Todo deleted successfully",
-                todo
+            deleted:true,
+            deletedAt: new Date()
+        }, {
+            new:true
+        })
+        if(!todo){
+            return res.status(404).json({
+                message:"Todo not found"
             });
-        }catch (error) {
+        }
+        // ADD THIS RESPONSE
+        res.status(200).json({
+            message: "Todo deleted successfully",
+            todo
+        });
+    }catch (error) {
         return res.status(500).json({
             message:"Error deleting todo",
             error:error.message
@@ -186,7 +188,10 @@ exports.deleteTodo=async(req,res)=>{
 
 // Get deleted todos for user
 exports.getDeletedTodos = async (req, res) => {
-    try {   
+    try {
+        // Clean up old deleted todos (older than 15 days)
+        await cleanupOldDeletedTodos();
+        
         const todos = await Todo.find({
             userId: req.user._id,
             deleted: true
@@ -207,7 +212,8 @@ exports.undoDeleteTodo=async(req,res)=>{
     const {id}=req.params;
     try{
         const todo=await Todo.findByIdAndUpdate(id,{
-            deleted:false
+            deleted:false,
+            deletedAt: null
         },{ 
             new:true
         });
@@ -254,6 +260,9 @@ exports.undoDeleteTodo=async(req,res)=>{
 // Get all todos for user (including completed and deleted)
 exports.getAllTodos = async (req, res) => {
     try {
+        // Clean up old deleted todos (older than 15 days)
+        await cleanupOldDeletedTodos();
+        
         const todos = await Todo.find({
             userId: req.user._id
         }).sort({ createdAt: -1 });

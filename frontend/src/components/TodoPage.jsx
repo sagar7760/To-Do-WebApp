@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import todoAPI from '../services/api';
 
 const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
@@ -8,9 +8,13 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
   const [error, setError] = useState(null);
   const [showAddInput, setShowAddInput] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState('');
+  
+  // Ref for mobile date input
+  const mobileDateInputRef = useRef(null);
 
   // Load tasks on component mount only
   useEffect(() => {
@@ -32,6 +36,7 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
         dueDate: todo.dueDate,
         completed: todo.completed,
         deleted: todo.deleted,
+        deletedAt: todo.deletedAt,
         createdAt: todo.createdAt
       }));
       
@@ -97,10 +102,11 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
     try {
       await todoAPI.createTodo({
         title: newTaskTitle.trim(),
-        dueDate: null
+        dueDate: newTaskDueDate || null
       });
       
       setNewTaskTitle('');
+      setNewTaskDueDate('');
       setShowAddInput(false);
       loadTasks();
     } catch (error) {
@@ -114,6 +120,7 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
       addTask();
     } else if (e.key === 'Escape') {
       setNewTaskTitle('');
+      setNewTaskDueDate('');
       setShowAddInput(false);
     }
   };
@@ -161,6 +168,18 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
     } else if (e.key === 'Escape') {
       cancelEditing();
     }
+  };
+
+  const getDaysUntilPermanentDeletion = (deletedAt) => {
+    if (!deletedAt) return 15; // Fallback for old deleted tasks without deletedAt
+    
+    const deletedDate = new Date(deletedAt);
+    const now = new Date();
+    const diffTime = now - deletedDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const remainingDays = 15 - diffDays;
+    
+    return Math.max(0, remainingDays);
   };
 
   const getFilteredTasks = () => {
@@ -297,8 +316,8 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
                   </div>
                   <span className={`text-sm px-2 py-1 rounded-full ${
                     activeTab === 'all'
-                      ? darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'
-                      : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                      ? darkMode ? ' text-gray-200' : ' text-gray-700'
+                      : darkMode ? 'text-gray-200' : 'text-gray-700'
                   }`}>
                     {getTaskCount('all')}
                   </span>
@@ -324,8 +343,8 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
                   </div>
                   <span className={`text-sm px-2 py-1 rounded-full ${
                     activeTab === 'completed'
-                      ? darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'
-                      : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                      ? darkMode ? ' text-gray-200' : ' text-gray-700'
+                      : darkMode ? 'text-gray-200' : 'text-gray-700'
                   }`}>
                     {getTaskCount('completed')}
                   </span>
@@ -351,8 +370,8 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
                   </div>
                   <span className={`text-sm px-2 py-1 rounded-full ${
                     activeTab === 'bin'
-                      ? darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'
-                      : darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                     ? darkMode ? ' text-gray-200' : ' text-gray-700'
+                      : darkMode ? 'text-gray-200' : 'text-gray-700'
                   }`}>
                     {getTaskCount('bin')}
                   </span>
@@ -364,27 +383,89 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-h-0 lg:ml-0">
-          {/* Mobile header */}
-          <div className={`lg:hidden flex items-center justify-between p-4 border-b ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'}`}>
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {activeTab === 'all' && 'My Tasks'}
-              {activeTab === 'completed' && 'Completed'}
-              {activeTab === 'bin' && 'Bin'}
-            </h1>
-            <div className="w-10"></div> {/* Spacer for centering */}
+          {/* Mobile Tab Navigation */}
+          <div className={`lg:hidden border-b ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'}`}>
+            <div className="flex overflow-x-auto scrollbar-hide">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'all'
+                    ? 'border-purple-500 text-purple-600'
+                    : darkMode
+                      ? 'border-transparent text-gray-400 hover:text-gray-300'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <span>Tasks</span>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    activeTab === 'all'
+                      ? `${darkMode ? ' text-white' : ' text-gray-900'}`
+                      : darkMode ? ' text-gray-300' : ' text-gray-900'
+                  }`}>
+                    {getTaskCount('all')}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('completed')}
+                className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'completed'
+                    ? 'border-purple-500 text-purple-600'
+                    : darkMode
+                      ? 'border-transparent text-gray-400 hover:text-gray-300'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Done</span>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    activeTab === 'completed'
+                      ? `${darkMode ? ' text-white' : ' text-gray-900'}`
+                      : darkMode ? ' text-gray-300' : ' text-gray-600'
+                  }`}>
+                    {getTaskCount('completed')}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('bin')}
+                className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'bin'
+                    ? 'border-purple-500 text-purple-600'
+                    : darkMode 
+                      ? 'border-transparent text-gray-400 hover:text-gray-300' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Bin</span>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    activeTab === 'bin'
+                      ? `${darkMode ? ' text-white' : ' text-gray-900'}`
+                      : darkMode ? ' text-gray-300' : ' text-gray-600'
+                  }`}>
+                    {getTaskCount('bin')}
+                  </span>
+                </div>
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 lg:p-8">
             <div className="max-w-4xl mx-auto">
-              <h1 className={`hidden lg:block text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-8`}>
+              <h1 className={`hidden lg:block text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-8`}>
                 {activeTab === 'all' && 'My Tasks'}
                 {activeTab === 'completed' && 'Completed Tasks'}
                 {activeTab === 'bin' && 'Deleted Tasks'}
@@ -405,7 +486,9 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
               {getFilteredTasks().map(task => (
                 <div
                   key={task.id}
-                  className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-3 shadow-sm hover:shadow-lg transform hover:scale-101 transition-all duration-300 ease-in-out cursor-pointer h-16 flex items-center`}
+                  className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-3 shadow-sm hover:shadow-lg transform hover:scale-101 transition-all duration-300 ease-in-out cursor-pointer ${
+                    task.deleted ? 'min-h-[80px]' : 'h-16'
+                  } flex items-center`}
                 >
                   {/* Tasks div */}
                    {/* task cards */}
@@ -432,7 +515,7 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
                       
                       {/* Task Content */}
                       <div className="flex-1 min-w-0 pl-2 text-left">
-                        <div className="flex flex-col justify-start h-full py-2">
+                        <div className={`flex flex-col ${task.deleted ? 'justify-center' : 'justify-start'} h-full py-2`}>
                           {editingTaskId === task.id ? (
                             <div className="relative">
                               <input
@@ -483,10 +566,52 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
                             </div>
                           )}
                           {task.dueDate && (
+                            <div className={`text-xs mt-1 text-left flex items-center space-x-1 ${
+                              (() => {
+                                const dueDate = new Date(task.dueDate);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                dueDate.setHours(0, 0, 0, 0);
+                                
+                                if (dueDate < today && !task.completed) {
+                                  return 'text-[#c65c3e]'; // Overdue
+                                } else if (dueDate.getTime() === today.getTime() && !task.completed) {
+                                    return 'text-[#efe295]'; // Due today
+                                } else {
+                                  return darkMode ? 'text-gray-400' : 'text-gray-500'; // Normal
+                                }
+                              })()
+                            }`}>
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span>
+                                Due: {new Date(task.dueDate).toLocaleDateString()}
+                                {(() => {
+                                  const dueDate = new Date(task.dueDate);
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  dueDate.setHours(0, 0, 0, 0);
+                                  
+                                  if (dueDate < today && !task.completed) {
+                                    return ' (Overdue)';
+                                  } else if (dueDate.getTime() === today.getTime() && !task.completed) {
+                                    return ' (Today)';
+                                  } else {
+                                    return '';
+                                  }
+                                })()}
+                              </span>
+                            </div>
+                          )}
+                          {task.deleted && (
                             <div className={`text-xs mt-1 text-left ${
                               darkMode ? 'text-gray-400' : 'text-gray-500'
                             }`}>
-                              Due: {new Date(task.dueDate).toLocaleDateString()}
+                              {getDaysUntilPermanentDeletion(task.deletedAt) > 0 
+                                ? `Will be permanently deleted in ${getDaysUntilPermanentDeletion(task.deletedAt)} day${getDaysUntilPermanentDeletion(task.deletedAt) === 1 ? '' : 's'}`
+                                : 'Will be permanently deleted soon'
+                              }
                             </div>
                           )}
                         </div>
@@ -494,7 +619,7 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center space-x-2 flex-shrink-0">
+                    <div className={`flex space-x-2 flex-shrink-0 ${task.deleted ? 'items-start self-start mt-2' : 'items-center'}`}>
                       {task.deleted ? (
                         <>
                           <button
@@ -541,12 +666,12 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
               {getFilteredTasks().length === 0 && (
                 <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   <div className="text-6xl mb-4">📝</div>
-                  <h3 className="text-lg font-semibold mb-2">
+                  <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-black'}`}>
                     {activeTab === 'all' && 'No tasks yet'}
                     {activeTab === 'completed' && 'No completed tasks'}
                     {activeTab === 'bin' && 'Bin is empty'}
                   </h3>
-                  <p>
+                  <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                     {activeTab === 'all' && 'Add your first task to get started!'}
                     {activeTab === 'completed' && 'Complete some tasks to see them here'}
                     {activeTab === 'bin' && 'Deleted tasks will appear here'}
@@ -567,42 +692,104 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
               <div className="max-w-4xl mx-auto">
                 <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-3 shadow-sm transition-all duration-300`}>
                   {showAddInput ? (
-                    <div className="flex items-center space-x-3">
+                    <div className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg border-2 ${
+                      darkMode 
+                        ? 'bg-gray-800 border-gray-600 ' 
+                        : 'bg-white border-gray-200 '
+                    } transition-colors`}>
                       <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0"></div>
-                      <input
-                        type="text"
-                        value={newTaskTitle}
-                        onChange={(e) => setNewTaskTitle(e.target.value)}
-                        onKeyDown={handleAddInputKeyPress}
-                        onBlur={() => {
-                          if (!newTaskTitle.trim()) {
-                            setShowAddInput(false);
-                          }
-                        }}
-                        placeholder="Task title"
-                        autoFocus
-                        className={`flex-1 bg-transparent outline-none text-base lg:text-lg ${
-                          darkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={addTask}
-                          disabled={!newTaskTitle.trim()}
-                          className="text-sm text-purple-600 hover:text-purple-700 disabled:text-gray-400 font-medium"
-                        >
-                          Add
-                        </button>
-                        <button
-                          onClick={() => {
-                            setNewTaskTitle('');
-                            setShowAddInput(false);
+                     
+                      {/* Main input area */}
+                      <div className="flex-1 min-w-0">
+                        <input
+                          type="text"
+                          value={newTaskTitle}
+                          onChange={(e) => setNewTaskTitle(e.target.value)}
+                          onKeyDown={handleAddInputKeyPress}
+                          onBlur={() => {
+                            if (!newTaskTitle.trim()) {
+                              setShowAddInput(false);
+                            }
                           }}
-                          className="text-sm text-gray-500 hover:text-gray-700 font-medium"
-                        >
-                          Cancel
-                        </button>
+                          placeholder="Add a task..."
+                          autoFocus
+                          className={`w-full bg-transparent outline-none text-base ${
+                            darkMode ? 'text-white placeholder-gray-400' : 'text-black placeholder-gray-500'
+                          }`}
+                        />
                       </div>
+                      
+                      {/* Due Date - Desktop: full input, Mobile: icon only */}
+                      <div className="flex items-center space-x-1 flex-shrink-0">
+                        {/* Desktop date input */}
+                        <input
+                          type="date"
+                          value={newTaskDueDate}
+                          onChange={(e) => setNewTaskDueDate(e.target.value)}
+                          className={`hidden sm:block bg-transparent outline-none text-sm px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-purple-500 transition-colors ${
+                            darkMode 
+                              ? 'text-gray-300 [color-scheme:dark]' 
+                              : 'text-gray-600 [color-scheme:light]'
+                          }`}
+                          title="Set due date"
+                        />
+                        
+                        {/* Mobile calendar icon */}
+                        <label
+                          htmlFor="mobile-date-input"
+                          className={`sm:hidden p-2 rounded-lg transition-colors cursor-pointer inline-block ${
+                            newTaskDueDate 
+                              ? 'text-purple-500' 
+                              : darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                          title="Set due date"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </label>
+                        
+                        {/* Hidden mobile date input - triggered by calendar icon */}
+                        <input
+                          id="mobile-date-input"
+                          ref={mobileDateInputRef}
+                          type="date"
+                          value={newTaskDueDate}
+                          onChange={(e) => setNewTaskDueDate(e.target.value)}
+                          className="sm:hidden absolute -left-[9999px] w-px h-px"
+                          style={{ clip: 'rect(0,0,0,0)' }}
+                          title="Set due date"
+                        />
+                        
+                        {/* Clear date button */}
+                        {newTaskDueDate && (
+                          <button
+                            onClick={() => setNewTaskDueDate('')}
+                            className={`text-gray-400 hover:text-gray-600 p-1 rounded transition-colors ${
+                              newTaskDueDate ? 'block' : 'hidden'
+                            }`}
+                            title="Clear due date"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      
+                      {/* Add Button */}
+                      <button
+                        onClick={addTask}
+                        disabled={!newTaskTitle.trim()}
+                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${
+                          !newTaskTitle.trim()
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-purple-500 hover:text-purple-700' 
+                        }`}
+                        title="Add task (or press Enter)"
+                      >
+                        Add
+                      </button>
                     </div>
                   ) : (
                     <div 

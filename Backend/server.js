@@ -1,5 +1,6 @@
 const express = require('express');
 const connectDB = require('./config/db');
+const { startCleanupSchedule } = require('./services/cleanupService');
 // const { db } = require('./models/userModel');
 const cors=require('cors');
 const morgan = require('morgan');
@@ -40,4 +41,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    
+    // Start the cleanup service for old deleted todos
+    startCleanupSchedule();
 });
