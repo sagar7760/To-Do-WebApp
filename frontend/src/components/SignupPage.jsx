@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Navbar from './navbar';
+import authAPI from '../services/authAPI';
 
-const SignupPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToLogin }) => {
+const SignupPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToLogin, onSignupSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -11,6 +11,8 @@ const SignupPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToLogin }) 
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -67,15 +69,20 @@ const SignupPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToLogin }) 
     setIsLoading(true);
     
     try {
-      // TODO: Implement signup API call
-      console.log('Signup data:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Handle successful signup
-      alert('Account created successfully!');
-      
+      const result = await authAPI.signup({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (result.success) {
+        // Call the onSignupSuccess callback to handle authentication state and navigation
+        if (onSignupSuccess) {
+          onSignupSuccess(result.user);
+        }
+      } else {
+        setErrors({ submit: result.message });
+      }
     } catch (error) {
       console.error('Signup error:', error);
       setErrors({ submit: 'Failed to create account. Please try again.' });
@@ -86,8 +93,6 @@ const SignupPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToLogin }) 
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
-      <Navbar darkMode={darkMode} toggleDarkMode={setDarkMode} onBackToHome={onBackToHome} />
-      
       <div className="flex items-center justify-center px-4 py-2">
         <div className="w-full max-w-md">
           {/* Header */}
@@ -147,20 +152,42 @@ const SignupPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToLogin }) 
 
               {/* Password Field */}
               <div>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${
-                    errors.password 
-                      ? 'border-red-500 focus:border-red-500' 
-                      : darkMode 
-                        ? 'border-gray-600 focus:border-blue-500 bg-gray-700 text-white' 
-                        : 'border-gray-300 focus:border-blue-500 bg-gray-50'
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors`}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 pr-12 rounded-lg border ${
+                      errors.password 
+                        ? 'border-red-500 focus:border-red-500' 
+                        : darkMode 
+                          ? 'border-gray-600 focus:border-blue-500 bg-gray-700 text-white' 
+                          : 'border-gray-300 focus:border-blue-500 bg-gray-50'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
+                      darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-800'
+                    } transition-colors`}
+                  >
+                    {showPassword ? (
+                      // Eye slash icon (hide password)
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      </svg>
+                    ) : (
+                      // Eye icon (show password)
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.543 7-1.275 4.057-5.065 7-9.543 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-500">{errors.password}</p>
                 )}
@@ -168,20 +195,42 @@ const SignupPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToLogin }) 
 
               {/* Confirm Password Field */}
               <div>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirm Password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${
-                    errors.confirmPassword 
-                      ? 'border-red-500 focus:border-red-500' 
-                      : darkMode 
-                        ? 'border-gray-600 focus:border-blue-500 bg-gray-700 text-white' 
-                        : 'border-gray-300 focus:border-blue-500 bg-gray-50'
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors`}
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    placeholder="Confirm Password"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 pr-12 rounded-lg border ${
+                      errors.confirmPassword 
+                        ? 'border-red-500 focus:border-red-500' 
+                        : darkMode 
+                          ? 'border-gray-600 focus:border-blue-500 bg-gray-700 text-white' 
+                          : 'border-gray-300 focus:border-blue-500 bg-gray-50'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
+                      darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-800'
+                    } transition-colors`}
+                  >
+                    {showConfirmPassword ? (
+                      // Eye slash icon (hide password)
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      </svg>
+                    ) : (
+                      // Eye icon (show password)
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.543 7-1.275 4.057-5.065 7-9.543 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
                 )}

@@ -1,7 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-const Navbar = ({ darkMode, toggleDarkMode, onBackToHome, onLogin, onSignup }) => {
+const Navbar = ({ darkMode, toggleDarkMode, onBackToHome, onLogin, onSignup, onNavigateToTodo, isAuthenticated, currentUser, onLogout, currentPage }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsProfileDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -17,6 +33,13 @@ const Navbar = ({ darkMode, toggleDarkMode, onBackToHome, onLogin, onSignup }) =
     const handleSignupClick = () => {
         if (onSignup) {
             onSignup();
+        }
+        setIsMenuOpen(false);
+    };
+
+    const handleLogoutClick = () => {
+        if (onLogout) {
+            onLogout();
         }
         setIsMenuOpen(false);
     };
@@ -42,41 +65,63 @@ const Navbar = ({ darkMode, toggleDarkMode, onBackToHome, onLogin, onSignup }) =
                     {/* Navigation Links */}
                     <div className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-4">
-                            {onBackToHome ? (
+                            {(currentPage === 'login' || currentPage === 'signup') ? (
                                 <button 
                                     onClick={onBackToHome}
                                     className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
                                 >
                                     ← Back to Home
                                 </button>
+                            ) : currentPage === 'todo' ? (
+                                <button 
+                                    onClick={onBackToHome}
+                                    className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
+                                >
+                                    Home
+                                </button>
                             ) : (
                                 <>
-                                    <a 
-                                        href="#" 
-                                        onClick={onBackToHome}
-                                        className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
-                                    >
-                                        Home
-                                    </a>
-                                    <button 
-                                        onClick={handleLoginClick}
-                                        className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
-                                    >
-                                        Login
-                                    </button>
-                                    <button 
-                                        onClick={handleSignupClick}
-                                        className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
-                                    >
-                                        Signup
-                                    </button>
+                                    {isAuthenticated ? (
+                                        <>
+                                            <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} px-3 py-2 text-sm font-medium`}>
+                                                Welcome, {currentUser?.name}!
+                                            </span>
+                                            <button 
+                                                onClick={onNavigateToTodo}
+                                                className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
+                                            >
+                                                My Tasks
+                                            </button>
+                                            <button 
+                                                onClick={handleLogoutClick}
+                                                className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
+                                            >
+                                                Logout
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button 
+                                                onClick={onLogin}
+                                                className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
+                                            >
+                                                Login
+                                            </button>
+                                            <button 
+                                                onClick={onSignup}
+                                                className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} px-3 py-2 text-sm font-medium transition-colors duration-200`}
+                                            >
+                                                Signup
+                                            </button>
+                                        </>
+                                    )}
                                 </>
                             )}
                         </div>
                     </div>
 
-                    {/* Dark Mode Toggle */}
-                    <div className="flex items-center">
+                    {/* Dark Mode Toggle and Profile */}
+                    <div className="flex items-center space-x-2">
                         <button
                             onClick={toggleDarkMode}
                             className={`p-2 rounded-md ${darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} transition-colors duration-200`}
@@ -94,6 +139,58 @@ const Navbar = ({ darkMode, toggleDarkMode, onBackToHome, onLogin, onSignup }) =
                                 </svg>
                             )}
                         </button>
+
+                        {/* Profile Dropdown - Only show when authenticated and on TodoPage */}
+                        {isAuthenticated && currentPage === 'todo' && (
+                            <div className="relative" ref={dropdownRef}>
+                                <button
+                                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                                    className={`p-2 rounded-md ${darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} transition-colors duration-200 flex items-center space-x-2`}
+                                    aria-label="Profile menu"
+                                >
+                                    {/* Profile Icon */}
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    {/* Dropdown Arrow */}
+                                    <svg className={`w-4 h-4 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {isProfileDropdownOpen && (
+                                    <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg z-50 ${
+                                        darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                                    }`}>
+                                        <div className="py-1">
+                                            <div className={`px-4 py-2 text-sm ${darkMode ? 'text-gray-300 border-b border-gray-700' : 'text-gray-700 border-b border-gray-200'}`}>
+                                                <div className="font-medium">{currentUser?.name}</div>
+                                                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{currentUser?.email}</div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    handleLogoutClick();
+                                                    setIsProfileDropdownOpen(false);
+                                                }}
+                                                className={`block w-full text-left px-4 py-2 text-sm ${
+                                                    darkMode 
+                                                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
+                                                        : 'text-gray-700 hover:bg-gray-100'
+                                                } transition-colors duration-200`}
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                    </svg>
+                                                    <span>Logout</span>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Mobile menu button */}
                         <div className="md:hidden ml-2">
@@ -121,37 +218,80 @@ const Navbar = ({ darkMode, toggleDarkMode, onBackToHome, onLogin, onSignup }) =
                 {/* Mobile Navigation Links */}
                 <div className={`md:hidden transition-all duration-300 ease-in-out ${isMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                        {onBackToHome ? (
+                        {(currentPage === 'login' || currentPage === 'signup') ? (
                             <button 
                                 onClick={() => {
                                     onBackToHome();
                                     toggleMenu();
                                 }}
-                                className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-right`}
+                                className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
                             >
                                 ← Back to Home
                             </button>
-                        ) : (
+                        ) : currentPage === 'todo' ? (
                             <>
-                                <a 
-                                    href="#" 
-                                    onClick={onBackToHome}
-                                    className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} block px-3 py-2 text-base font-medium transition-colors duration-200`}
+                                <button 
+                                    onClick={() => {
+                                        onBackToHome();
+                                        toggleMenu();
+                                    }}
+                                    className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-600'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
                                 >
                                     Home
-                                </a>
-                                <button 
-                                    onClick={handleLoginClick}
-                                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
-                                >
-                                    Login
                                 </button>
-                                <button 
-                                    onClick={handleSignupClick}
-                                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
-                                >
-                                    Signup
-                                </button>
+                                {isAuthenticated && (
+                                    <>
+                                        <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} block px-3 py-2 text-base font-medium`}>
+                                            Welcome, {currentUser?.name}!
+                                        </span>
+                                        <button 
+                                            onClick={handleLogoutClick}
+                                            className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
+                                        >
+                                            Logout
+                                        </button>
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                {isAuthenticated ? (
+                                    <>
+                                        <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} block px-3 py-2 text-base font-medium`}>
+                                            Welcome, {currentUser?.name}!
+                                        </span>
+                                        <button 
+                                            onClick={() => {
+                                                onNavigateToTodo();
+                                                toggleMenu();
+                                            }}
+                                            className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
+                                        >
+                                            My Tasks
+                                        </button>
+                                        <button 
+                                            onClick={handleLogoutClick}
+                                            className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
+                                        >
+                                            Logout
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button 
+                                            onClick={handleLoginClick}
+                                            className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
+                                        >
+                                            Login
+                                        </button>
+                                        <button 
+                                            onClick={handleSignupClick}
+                                            className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left`}
+                                        >
+                                            Signup
+                                        </button>
+                                    </>
+                                )}
                             </>
                         )}
                     </div>

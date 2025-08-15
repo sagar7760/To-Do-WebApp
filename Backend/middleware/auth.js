@@ -2,25 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
 const protect = async (req, res, next) => {
-    // TEMPORARY: For testing without authentication
-    // Comment out this block when you implement proper auth
-    // You'll need to replace this with a real user ID from your database
-    try {
-        // Create a test user in your database or use an existing one
-        req.user = await User.findOne().select('-password'); // Gets first user
-        if (!req.user) {
-            return res.status(401).json({ message: "No test user found. Please create a user first." });
-        }
-        console.log('Using test user:', req.user._id);
-        return next();
-    } catch (error) {
-        console.log('Error finding test user:', error.message);
-        return res.status(401).json({ message: "Error finding test user" });
-    }
-    
-    // ORIGINAL AUTH CODE - Uncomment when ready for real auth
-    /*
-   let token;
+    let token;
     
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
@@ -56,7 +38,6 @@ const protect = async (req, res, next) => {
             message: "Access Denied, No Token Provided" 
         });
     }
-    */
 };
 
 module.exports = protect;

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from './navbar';
 import todoAPI from '../services/api';
 
-const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
+const TodoPage = ({ darkMode, setDarkMode, onBackToHome, currentUser }) => {
   const [activeTab, setActiveTab] = useState('all');
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,6 +9,8 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
   const [showAddInput, setShowAddInput] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingTaskTitle, setEditingTaskTitle] = useState('');
 
   // Load tasks on component mount only
   useEffect(() => {
@@ -117,6 +118,51 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
     }
   };
 
+  // Edit task functions
+  const startEditing = (task) => {
+    console.log('startEditing called with task:', task);
+    setEditingTaskId(task.id);
+    setEditingTaskTitle(task.title);
+  };
+
+  const cancelEditing = () => {
+    setEditingTaskId(null);
+    setEditingTaskTitle('');
+  };
+
+  const updateTask = async (taskId) => {
+    if (!editingTaskTitle.trim()) {
+      cancelEditing();
+      return;
+    }
+
+    try {
+      await todoAPI.updateTodo(taskId, {
+        title: editingTaskTitle.trim()
+      });
+
+      // Update the task in the local state
+      setTasks(tasks.map(task => 
+        task.id === taskId 
+          ? { ...task, title: editingTaskTitle.trim() }
+          : task
+      ));
+
+      cancelEditing();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      setError('Failed to update task. Please try again.');
+    }
+  };
+
+  const handleEditKeyPress = (e, taskId) => {
+    if (e.key === 'Enter') {
+      updateTask(taskId);
+    } else if (e.key === 'Escape') {
+      cancelEditing();
+    }
+  };
+
   const getFilteredTasks = () => {
     switch (activeTab) {
       case 'completed':
@@ -142,12 +188,10 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
   };
 
   return (
-    <>
-      <Navbar darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} onBackToHome={onBackToHome} />
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'} transition-colors duration-300`}>
-        
-        {/* Error Message */}
-        {error && (
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'} transition-colors duration-300`}>
+      
+      {/* Error Message */}
+      {error && (
           <div className="fixed top-20 left-4 right-4 z-30 flex justify-center md:justify-end animate-slide-in">
             <div className={`${
               darkMode 
@@ -389,13 +433,55 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
                       {/* Task Content */}
                       <div className="flex-1 min-w-0 pl-2 text-left">
                         <div className="flex flex-col justify-start h-full py-2">
-                          <h3 className={`text-lg font-semibold leading-tight text-left ${
-                            task.completed 
-                              ? darkMode ? 'text-gray-400 line-through' : 'text-gray-500 line-through'
-                              : darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>
-                            {task.title}
-                          </h3>
+                          {editingTaskId === task.id ? (
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={editingTaskTitle}
+                                onChange={(e) => setEditingTaskTitle(e.target.value)}
+                                onKeyDown={(e) => handleEditKeyPress(e, task.id)}
+                                onBlur={() => updateTask(task.id)}
+                                className={`w-full text-lg font-semibold leading-tight text-left bg-transparent border-b-2 outline-none px-1 py-1 -mx-1 ${
+                                  darkMode ? 'text-white' : 'text-gray-900'
+                                }`}
+                                autoFocus
+                                maxLength={200}
+                              />
+                              <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                Press Enter to save, Escape to cancel
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="relative group">
+                              <h3 
+                                className={`text-lg font-semibold leading-tight text-left cursor-pointer hover:bg-opacity-20  rounded px-1 py-1 -mx-1 transition-colors duration-200 focus:outline-none   focus:ring-opacity-50 ${
+                                  task.completed 
+                                    ? darkMode ? 'text-gray-400 line-through' : 'text-gray-500 line-through'
+                                    : darkMode ? 'text-white' : 'text-gray-900'
+                                } ${!task.completed && !task.deleted ? 'hover:pr-8' : ''}`}
+                                onClick={() => !task.completed && !task.deleted && startEditing(task)}
+                                onKeyDown={(e) => {
+                                  if ((e.key === 'Enter' || e.key === ' ') && !task.completed && !task.deleted) {
+                                    e.preventDefault();
+                                    startEditing(task);
+                                  }
+                                }}
+                                tabIndex={!task.completed && !task.deleted ? 0 : -1}
+                                role={!task.completed && !task.deleted ? "button" : "text"}
+                                aria-label={!task.completed && !task.deleted ? `Edit task: ${task.title}` : task.title}
+                                title={!task.completed && !task.deleted ? "Click to edit" : ""}
+                              >
+                                {task.title}
+                              </h3>
+                              {!task.completed && !task.deleted && (
+                                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                          )}
                           {task.dueDate && (
                             <div className={`text-xs mt-1 text-left ${
                               darkMode ? 'text-gray-400' : 'text-gray-500'
@@ -539,8 +625,7 @@ const TodoPage = ({ darkMode, setDarkMode, onBackToHome }) => {
           </div>
         )}
       </div>
-      </div>
-    </>
+    </div>
   );
 };
 

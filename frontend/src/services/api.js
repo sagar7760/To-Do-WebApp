@@ -2,10 +2,16 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 class TodoAPI {
   constructor() {
+    this.updateToken();
+  }
+
+  updateToken() {
     this.token = localStorage.getItem('token');
   }
 
   getHeaders() {
+    // Always get fresh token from localStorage
+    this.updateToken();
     return {
       'Content-Type': 'application/json',
       ...(this.token && { Authorization: `Bearer ${this.token}` })
