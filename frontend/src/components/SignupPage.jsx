@@ -75,10 +75,12 @@ const SignupPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToLogin, on
         password: formData.password
       });
 
+      console.log('Signup API result:', result);
+
       if (result.success) {
         // Call the onSignupSuccess callback to handle authentication state and navigation
         if (onSignupSuccess) {
-          onSignupSuccess(result.user);
+          onSignupSuccess(result); // Pass the full result object instead of just result.user
         }
       } else {
         setErrors({ submit: result.message });

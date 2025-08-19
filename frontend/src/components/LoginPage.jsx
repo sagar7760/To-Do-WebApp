@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import authAPI from '../services/authAPI';
 
-const LoginPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToSignup, onLoginSuccess }) => {
+const LoginPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToSignup, onNavigateToForgotPassword, onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -60,26 +60,27 @@ const LoginPage = ({ darkMode, setDarkMode, onBackToHome, onNavigateToSignup, on
         password: formData.password
       });
 
-      if (result.success) {
-        // Call the onLoginSuccess callback to handle authentication state and navigation
-        if (onLoginSuccess) {
-          onLoginSuccess(result.user);
-        }
-      } else {
+      // Always call onLoginSuccess with the result to let App.jsx handle the flow
+      if (onLoginSuccess) {
+        onLoginSuccess(result);
+      }
+      
+      // Only set errors if the result indicates a failure that doesn't require further action
+      if (!result.success && !result.needsEmailVerification && !result.requiresOTP) {
         setErrors({ submit: result.message });
       }
     } catch (error) {
       console.error('Login error:', error);
-      setErrors({ submit: 'Invalid email or password. Please try again.' });
+      setErrors({ submit: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleForgotPassword = () => {
-    // TODO: Implement forgot password functionality
-    console.log('Forgot password clicked');
-    alert('Forgot password functionality will be implemented soon!');
+    if (onNavigateToForgotPassword) {
+      onNavigateToForgotPassword();
+    }
   };
 
   return (

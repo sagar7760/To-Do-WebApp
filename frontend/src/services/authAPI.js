@@ -23,7 +23,17 @@ const authAPI = {
         throw new Error(data.message || 'Registration failed');
       }
 
-      // Store token in localStorage
+      // Handle email verification requirement
+      if (data.needsEmailVerification) {
+        return {
+          success: true,
+          email: data.email, // Use email from response instead of user object
+          needsEmailVerification: true,
+          message: data.message || 'Please verify your email to complete registration'
+        };
+      }
+
+      // Store token in localStorage (for legacy users or if verification is skipped)
       if (data.token) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify({
@@ -41,7 +51,7 @@ const authAPI = {
           email: data.email
         },
         token: data.token,
-        message: 'Account created successfully!'
+        message: data.message || 'Account created successfully!'
       };
     } catch (error) {
       console.error('Signup error:', error);
@@ -55,6 +65,7 @@ const authAPI = {
   // Login user
   login: async (userData) => {
     try {
+      console.log('Attempting login for:', userData.email);
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
@@ -66,13 +77,31 @@ const authAPI = {
         }),
       });
 
+      console.log('Login response status:', response.status);
       const data = await response.json();
+      console.log('Login response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        return {
+          success: false,
+          message: data.message || 'Login failed',
+          needsEmailVerification: data.needsEmailVerification,
+          requiresOTP: data.requiresOTP,
+          email: data.email
+        };
       }
 
-      // Store token in localStorage
+      // Handle OTP requirement
+      if (data.requiresOTP) {
+        return {
+          success: true,
+          requiresOTP: true,
+          email: data.email,
+          message: data.message
+        };
+      }
+
+      // Store token in localStorage if login is complete
       if (data.token) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify({
@@ -97,6 +126,167 @@ const authAPI = {
       return {
         success: false,
         message: error.message || 'Login failed. Please try again.'
+      };
+    }
+  },
+
+  // Verify login OTP
+  verifyLoginOTP: async (email, otp) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-login-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'OTP verification failed');
+      }
+
+      // Store token in localStorage
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify({
+          id: data._id,
+          name: data.name,
+          email: data.email
+        }));
+      }
+
+      return {
+        success: true,
+        user: {
+          id: data._id,
+          name: data.name,
+          email: data.email
+        },
+        token: data.token,
+        message: data.message || 'Login successful!'
+      };
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      return {
+        success: false,
+        message: error.message || 'OTP verification failed. Please try again.'
+      };
+    }
+  },
+
+  // Send email verification OTP
+  sendEmailVerificationOTP: async (email) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/send-email-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send verification code');
+      }
+
+      return {
+        success: true,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Send email verification error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to send verification code. Please try again.'
+      };
+    }
+  },
+
+  // Verify email OTP
+  verifyEmailOTP: async (email, otp) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-email-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Email verification failed');
+      }
+
+      // Check if this is a new user registration (includes user data and token)
+      if (data.token && data._id) {
+        // Store token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify({
+          id: data._id,
+          name: data.name,
+          email: data.email
+        }));
+
+        return {
+          success: true,
+          user: {
+            id: data._id,
+            name: data.name,
+            email: data.email
+          },
+          token: data.token,
+          message: data.message,
+          isNewUser: true // Flag to indicate this was a new user registration
+        };
+      }
+
+      // Existing user email verification
+      return {
+        success: true,
+        message: data.message,
+        isNewUser: false
+      };
+    } catch (error) {
+      console.error('Email verification error:', error);
+      return {
+        success: false,
+        message: error.message || 'Email verification failed. Please try again.'
+      };
+    }
+  },
+
+  // Resend OTP
+  resendOTP: async (email, purpose = 'email_verification') => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/resend-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, purpose }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to resend code');
+      }
+
+      return {
+        success: true,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to resend code. Please try again.'
       };
     }
   },
@@ -140,6 +330,66 @@ const authAPI = {
   isAuthenticated: () => {
     const token = localStorage.getItem('token');
     return !!token;
+  },
+
+  // Forgot Password - Send OTP
+  forgotPassword: async (email) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send password reset code');
+      }
+
+      return {
+        success: true,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to send password reset code. Please try again.'
+      };
+    }
+  },
+
+  // Reset Password - Verify OTP and set new password
+  resetPassword: async (email, otp, newPassword) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Password reset failed');
+      }
+
+      return {
+        success: true,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return {
+        success: false,
+        message: error.message || 'Password reset failed. Please try again.'
+      };
+    }
   }
 };
 
