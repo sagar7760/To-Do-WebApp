@@ -28,7 +28,8 @@ const corsOptions = {
     'http://localhost:5174', 
     'http://127.0.0.1:5173', 
     'http://127.0.0.1:5174',
-    process.env.FRONTEND_URL, // Your Vercel URL (will be set later)
+    'https://to-do-web-app-hazel.vercel.app', // Your Vercel frontend URL
+    process.env.FRONTEND_URL, // Additional frontend URL if needed
     'https://taskly-7bc492659ba9.herokuapp.com' // Your actual Heroku backend URL
   ],
   credentials: true,
@@ -36,6 +37,12 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Debug CORS requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - Origin: ${req.get('Origin')}`);
+  next();
+});
 
 if(process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
