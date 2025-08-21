@@ -23,7 +23,7 @@ const corsOptions = {
     'http://127.0.0.1:5173', 
     'http://127.0.0.1:5174',
     process.env.FRONTEND_URL, // Your Vercel URL
-    'https://your-app-name.vercel.app' // Replace with your actual Vercel URL
+    'https://your-actual-heroku-app.herokuapp.com' // Replace with your actual Heroku URL
   ],
   credentials: true,
   optionsSuccessStatus: 200
