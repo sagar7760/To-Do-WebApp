@@ -4,6 +4,8 @@
   "description": "Taskly - A Todo Web Application (Development)",
   "private": true,
   "scripts": {
+    "start": "cd Backend && npm start",
+    "heroku-postbuild": "cd Backend && npm install",
     "dev": "concurrently \"cd Backend && npm run dev\" \"cd frontend && npm run dev\"",
     "backend:install": "cd Backend && npm install",
     "frontend:install": "cd frontend && npm install",
