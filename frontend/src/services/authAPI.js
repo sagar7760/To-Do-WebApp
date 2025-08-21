@@ -1,9 +1,11 @@
 // Auth API service for login and signup
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD 
-    ? 'https://taskly-7bc492659ba9.herokuapp.com/api/auth'  // Your Heroku backend URL
-    : 'http://localhost:5000/api/auth'
-  );
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://taskly-7bc492659ba9.herokuapp.com/api/auth'  // Your Heroku backend URL
+  : 'http://localhost:5000/api/auth';
+
+console.log('Auth API Base URL:', API_BASE_URL);
+console.log('Environment PROD:', import.meta.env.PROD);
+console.log('Environment VITE_AUTH_API_URL:', import.meta.env.VITE_AUTH_API_URL);
 
 const authAPI = {
   // Register new user
