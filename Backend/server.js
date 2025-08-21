@@ -11,6 +11,12 @@ const errorHandler = require('./middleware/errorHandler');
 // It connects to the database and sets up the server to listen on a specified port.
 const app = express();
 require('dotenv').config();
+
+// Log environment info for debugging
+console.log('Starting Taskly Backend...');
+console.log('Node Environment:', process.env.NODE_ENV);
+console.log('Port:', process.env.PORT || 5000);
+
 connectDB();
 
 app.use(express.json());
@@ -58,10 +64,37 @@ app.use('/api/todos', require('./routes/todos'));
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+// Add error handling for server startup
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server is running on port ${PORT}`);
+    console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`✅ Server URL: http://localhost:${PORT}`);
     
     // Start the cleanup service for old deleted todos
-    startCleanupSchedule();
+    try {
+        startCleanupSchedule();
+        console.log('✅ Cleanup service started');
+    } catch (error) {
+        console.error('⚠️  Cleanup service failed to start:', error.message);
+    }
+});
+
+// Handle server errors
+server.on('error', (error) => {
+    console.error('❌ Server failed to start:', error.message);
+    process.exit(1);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error.message);
+    console.error(error.stack);
+    process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
 });
