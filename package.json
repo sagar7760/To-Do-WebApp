@@ -1,0 +1,31 @@
+{
+  "name": "taskly-app",
+  "version": "1.0.0",
+  "description": "Taskly - A Todo Web Application (Development)",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"cd Backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "build": "cd frontend && npm run build",
+    "backend:install": "cd Backend && npm install",
+    "frontend:install": "cd frontend && npm install",
+    "install:all": "npm run backend:install && npm run frontend:install",
+    "backend:start": "cd Backend && npm start",
+    "frontend:start": "cd frontend && npm run dev",
+    "clean": "rm -rf Backend/node_modules frontend/node_modules node_modules",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sagar7760/To-Do-WebApp.git"
+  },
+  "author": "Sagar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sagar7760/To-Do-WebApp/issues"
+  },
+  "homepage": "https://github.com/sagar7760/To-Do-WebApp#readme",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "dependencies": {}
+}

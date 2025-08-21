@@ -1,5 +1,9 @@
 // Auth API service for login and signup
-const API_BASE_URL = 'http://localhost:5000/api/auth';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD 
+    ? 'https://your-heroku-app.herokuapp.com/api/auth'  // Replace with your Heroku URL
+    : 'http://localhost:5000/api/auth'
+  );
 
 const authAPI = {
   // Register new user
