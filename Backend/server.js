@@ -6,7 +6,6 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 const connectDB = require('./config/db');
 const { startCleanupSchedule } = require('./services/cleanupService');
-// const { db } = require('./models/userModel');
 const cors=require('cors');
 const morgan = require('morgan');
 const errorHandler = require('./middleware/errorHandler');
@@ -80,15 +79,18 @@ app.use(xss()); // Prevent XSS attacks
 app.use(hpp()); // Prevent HTTP Parameter Pollution
 
 // CORS configuration for production
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'https://to-do-web-app-hazel.vercel.app', // Your Vercel frontend URL
+];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
 const corsOptions = {
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174', 
-    'http://127.0.0.1:5173', 
-    'http://127.0.0.1:5174',
-    'https://to-do-web-app-hazel.vercel.app', // Your Vercel frontend URL
-    process.env.FRONTEND_URL, // Additional frontend URL if needed
-  ],
+  origin: allowedOrigins,
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -104,8 +106,6 @@ if(process.env.NODE_ENV === 'development') {
       console.log(`${req.method} ${req.path} - Origin: ${req.get('Origin')}`);
       next();
     });
-} else {
-    app.use(morgan('combined'));
 }
 
 // Health check endpoint (minimal info)
@@ -164,21 +164,33 @@ server.on('error', (error) => {
     process.exit(1);
 });
 
-// Handle uncaught exceptions
+const gracefulShutdown = (signal, error) => {
+  console.log(` ${signal} received. Shutting down gracefully...`);
+  server.close(() => {
+    console.log(' HTTP server closed.');
+    // In a real-world app, you'd also close your database connection here
+    // mongoose.connection.close(false, () => {
+    //   console.log('MongoDB connection closed.');
+    //   process.exit(error ? 1 : 0);
+    // });
+    process.exit(error ? 1 : 0);
+  });
+};
+
+// Handle uncaught exceptions - this is a last resort.
 process.on('uncaughtException', (error) => {
-    console.error(' Uncaught Exception');
-    if (process.env.NODE_ENV === 'development') {
-        console.error(error.message);
-        console.error(error.stack);
-    }
-    process.exit(1);
+    console.error('UNCAUGHT EXCEPTION! Shutting down...');
+    console.error(error.name, error.message, error.stack);
+    gracefulShutdown('uncaughtException', error);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-    console.error(' Unhandled Rejection');
-    if (process.env.NODE_ENV === 'development') {
-        console.error('at:', promise, 'reason:', reason);
-    }
-    process.exit(1);
+    console.error('UNHANDLED REJECTION! Shutting down...');
+    console.error('Reason:', reason);
+    gracefulShutdown('unhandledRejection', reason);
 });
+
+// Handle termination signals from the OS or process managers (e.g., Heroku)
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT')); // For local Ctrl+C
