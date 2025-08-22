@@ -1,7 +1,7 @@
 const express = require('express');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
+const mongoSanitize = require('mongoose-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const connectDB = require('./config/db');
@@ -83,7 +83,6 @@ const corsOptions = {
     'http://127.0.0.1:5174',
     'https://to-do-web-app-hazel.vercel.app', // Your Vercel frontend URL
     process.env.FRONTEND_URL, // Additional frontend URL if needed
-    'https://taskly-7bc492659ba9.herokuapp.com' // Your actual Heroku backend URL
   ],
   credentials: true,
   optionsSuccessStatus: 200
