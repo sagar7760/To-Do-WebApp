@@ -1,16 +1,4 @@
-const express = require('express');
 const { body, validationResult } = require('express-validator');
-const router = express.Router();
-const { 
-    registerNewUser, 
-    loginUser, 
-    verifyLoginOTP, 
-    sendEmailVerificationOTP, 
-    verifyEmailOTP, 
-    resendOTP,
-    forgotPassword,
-    resetPassword
-} = require('../controllers/userController');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -64,6 +52,34 @@ const validateUserLogin = [
     handleValidationErrors
 ];
 
+// Todo validation
+const validateTodo = [
+    body('title')
+        .trim()
+        .isLength({ min: 1, max: 200 })
+        .withMessage('Title must be between 1 and 200 characters')
+        .escape(), // Prevent XSS
+    
+    body('description')
+        .optional()
+        .trim()
+        .isLength({ max: 1000 })
+        .withMessage('Description must be less than 1000 characters')
+        .escape(), // Prevent XSS
+    
+    body('priority')
+        .optional()
+        .isIn(['low', 'medium', 'high'])
+        .withMessage('Priority must be low, medium, or high'),
+    
+    body('dueDate')
+        .optional()
+        .isISO8601()
+        .withMessage('Due date must be a valid date'),
+    
+    handleValidationErrors
+];
+
 // OTP validation
 const validateOTP = [
     body('email')
@@ -79,28 +95,32 @@ const validateOTP = [
     handleValidationErrors
 ];
 
-// Route to register a new user
-router.post('/register', validateUserRegistration, registerNewUser);
+// Password reset validation
+const validatePasswordReset = [
+    body('email')
+        .isEmail()
+        .normalizeEmail()
+        .withMessage('Please provide a valid email'),
+    
+    body('otp')
+        .isLength({ min: 6, max: 6 })
+        .isNumeric()
+        .withMessage('OTP must be exactly 6 digits'),
+    
+    body('newPassword')
+        .isLength({ min: 8, max: 128 })
+        .withMessage('Password must be between 8 and 128 characters')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+        .withMessage('Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character'),
+    
+    handleValidationErrors
+];
 
-// Route to login a user
-router.post('/login', validateUserLogin, loginUser);
-
-// Route to verify login OTP
-router.post('/verify-login-otp', validateOTP, verifyLoginOTP);
-
-// Route to send email verification OTP
-router.post('/send-email-verification', body('email').isEmail().normalizeEmail(), handleValidationErrors, sendEmailVerificationOTP);
-
-// Route to verify email OTP
-router.post('/verify-email-otp', validateOTP, verifyEmailOTP);
-
-// Route to resend OTP
-router.post('/resend-otp', body('email').isEmail().normalizeEmail(), handleValidationErrors, resendOTP);
-
-// Route to request password reset
-router.post('/forgot-password', forgotPassword);
-
-// Route to reset password with OTP
-router.post('/reset-password', resetPassword);
-
-module.exports= router;
+module.exports = {
+    validateUserRegistration,
+    validateUserLogin,
+    validateTodo,
+    validateOTP,
+    validatePasswordReset,
+    handleValidationErrors
+};

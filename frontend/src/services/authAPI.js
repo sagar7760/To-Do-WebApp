@@ -1,11 +1,14 @@
 // Auth API service for login and signup
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://taskly-7bc492659ba9.herokuapp.com/api/auth'  // Your Heroku backend URL
-  : 'http://localhost:5000/api/auth';
+const API_BASE_URL = import.meta.env.VITE_AUTH_API_URL || 
+  (import.meta.env.PROD 
+    ? `${import.meta.env.VITE_API_URL}/auth`
+    : 'http://localhost:5000/api/auth'
+  );
 
-console.log('Auth API Base URL:', API_BASE_URL);
-console.log('Environment PROD:', import.meta.env.PROD);
-console.log('Environment VITE_AUTH_API_URL:', import.meta.env.VITE_AUTH_API_URL);
+// Only log in development
+if (import.meta.env.DEV) {
+  console.log('Auth API Base URL:', API_BASE_URL);
+}
 
 const authAPI = {
   // Register new user
@@ -71,7 +74,6 @@ const authAPI = {
   // Login user
   login: async (userData) => {
     try {
-      console.log('Attempting login for:', userData.email);
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
@@ -83,9 +85,7 @@ const authAPI = {
         }),
       });
 
-      console.log('Login response status:', response.status);
       const data = await response.json();
-      console.log('Login response data:', data);
 
       if (!response.ok) {
         return {

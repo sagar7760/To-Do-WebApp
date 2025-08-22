@@ -1,4 +1,9 @@
 const express = require('express');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 const connectDB = require('./config/db');
 const { startCleanupSchedule } = require('./services/cleanupService');
 // const { db } = require('./models/userModel');
@@ -12,14 +17,62 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 require('dotenv').config();
 
-// Log environment info for debugging
-console.log('Starting Taskly Backend...');
-console.log('Node Environment:', process.env.NODE_ENV);
-console.log('Port:', process.env.PORT || 5000);
+// Security: Hide X-Powered-By header
+app.disable('x-powered-by');
+
+// Log environment info for debugging (only in development)
+if (process.env.NODE_ENV === 'development') {
+  console.log('Starting Taskly Backend...');
+  console.log('Node Environment:', process.env.NODE_ENV);
+  console.log('Port:', process.env.PORT || 5000);
+}
 
 connectDB();
 
-app.use(express.json());
+// Security Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  }
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Auth rate limiting (more strict)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 auth requests per windowMs
+  message: {
+    error: 'Too many authentication attempts, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  skipSuccessfulRequests: true,
+});
+
+app.use(limiter);
+
+// Body parsing middleware with size limits
+app.use(express.json({ limit: '10mb' }));
+
+// Data sanitization
+app.use(mongoSanitize()); // Prevent NoSQL injection
+app.use(xss()); // Prevent XSS attacks
+app.use(hpp()); // Prevent HTTP Parameter Pollution
 
 // CORS configuration for production
 const corsOptions = {
@@ -38,26 +91,30 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Debug CORS requests
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path} - Origin: ${req.get('Origin')}`);
-  next();
-});
-
+// Secure logging (don't log in production)
 if(process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
+    
+    // Debug CORS requests (development only)
+    app.use((req, res, next) => {
+      console.log(`${req.method} ${req.path} - Origin: ${req.get('Origin')}`);
+      next();
+    });
 } else {
     app.use(morgan('combined'));
 }
 
-// Health check endpoint
+// Health check endpoint (minimal info)
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Taskly API is running!', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    status: 'OK',
+    service: 'Taskly API',
+    timestamp: new Date().toISOString()
   });
 });
+
+// Apply auth rate limiting to authentication routes
+app.use('/api/auth', authLimiter);
 
 // Routes
 //user authentication routes
@@ -74,34 +131,50 @@ const PORT = process.env.PORT || 5000;
 
 // Add error handling for server startup
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server is running on port ${PORT}`);
-    console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`✅ Server URL: http://localhost:${PORT}`);
+    if (process.env.NODE_ENV === 'development') {
+        console.log(` Server is running on port ${PORT}`);
+        console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`Server URL: http://localhost:${PORT}`);
+    }
     
     // Start the cleanup service for old deleted todos
     try {
         startCleanupSchedule();
-        console.log('✅ Cleanup service started');
+        if (process.env.NODE_ENV === 'development') {
+            console.log(' Cleanup service started');
+        }
     } catch (error) {
-        console.error('⚠️  Cleanup service failed to start:', error.message);
+        console.error(' Cleanup service failed to start');
+        if (process.env.NODE_ENV === 'development') {
+            console.error(error.message);
+        }
     }
 });
 
 // Handle server errors
 server.on('error', (error) => {
-    console.error('❌ Server failed to start:', error.message);
+    console.error(' Server failed to start');
+    if (process.env.NODE_ENV === 'development') {
+        console.error(error.message);
+    }
     process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-    console.error('❌ Uncaught Exception:', error.message);
-    console.error(error.stack);
+    console.error(' Uncaught Exception');
+    if (process.env.NODE_ENV === 'development') {
+        console.error(error.message);
+        console.error(error.stack);
+    }
     process.exit(1);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    console.error(' Unhandled Rejection');
+    if (process.env.NODE_ENV === 'development') {
+        console.error('at:', promise, 'reason:', reason);
+    }
     process.exit(1);
 });

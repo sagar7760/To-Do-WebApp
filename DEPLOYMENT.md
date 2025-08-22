@@ -1,6 +1,9 @@
 # Deployment Guide
 
-## 🚀 Heroku Backend Deployment
+## � **Security Notice**
+This repository contains a public codebase. **Never commit sensitive information** like API URLs, database credentials, or API keys to the repository.
+
+## �🚀 Heroku Backend Deployment
 
 ### 1. Prerequisites
 - Install [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)

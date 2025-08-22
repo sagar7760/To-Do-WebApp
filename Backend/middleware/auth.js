@@ -8,7 +8,6 @@ const protect = async (req, res, next) => {
         try {
             // Extract token
             token = req.headers.authorization.split(' ')[1];
-            console.log('Extracted token:', token);
             
             // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -18,23 +17,32 @@ const protect = async (req, res, next) => {
             
             // Check if user exists
             if (!req.user) {
-                console.log('User not found in database');
-                return res.status(401).json({ message: "User not found" });
+                return res.status(401).json({ 
+                    success: false,
+                    message: "User not found" 
+                });
             }
             
-            console.log('User successfully set:', req.user._id);
             next(); // Continue to the next middleware/controller
             
         } catch (error) {
-            console.log('JWT verification error:', error.message);
+            // Different error messages for different JWT errors
+            let message = "Access Denied, Invalid Token";
+            
+            if (error.name === 'TokenExpiredError') {
+                message = "Access Denied, Token Expired";
+            } else if (error.name === 'JsonWebTokenError') {
+                message = "Access Denied, Invalid Token";
+            }
+            
             return res.status(401).json({ 
-                message: "Access Denied, Not Authorized", 
-                error: error.message 
+                success: false,
+                message: message
             });
         }
     } else {
-        console.log('No Bearer token found in headers');
         return res.status(401).json({ 
+            success: false,
             message: "Access Denied, No Token Provided" 
         });
     }
