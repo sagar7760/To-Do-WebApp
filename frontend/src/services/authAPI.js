@@ -1,18 +1,20 @@
 // Auth API service for login and signup
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL 
-  ? `${import.meta.env.VITE_BACKEND_URL}/auth`
-  : (import.meta.env.PROD 
-    ? import.meta.env.VITE_API_URL 
-      ? `${import.meta.env.VITE_API_URL}/auth`
-      : '/api/auth'  // Fallback
-    : 'http://localhost:5000/api/auth'
-  );
+const BASE_URL = import.meta.env.PROD
+  ? import.meta.env.VITE_BACKEND_URL // In production, this is set by Vercel.
+  : 'http://localhost:5000/api';     // In development, we use the local backend.
+
+// This check ensures that if you ever deploy to production without setting
+// the VITE_BACKEND_URL, the build will fail with a clear error message
+// instead of deploying a broken app.
+if (import.meta.env.PROD && !BASE_URL) {
+  throw new Error('VITE_BACKEND_URL is not defined for production. Please set it in your Vercel environment variables.');
+}
+
+const API_BASE_URL = `${BASE_URL}/auth`;
 
 // Only log in development
 if (import.meta.env.DEV) {
   console.log('Auth API Base URL:', API_BASE_URL);
-  console.log('VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
-  console.log('PROD:', import.meta.env.PROD);
 }
 
 const authAPI = {

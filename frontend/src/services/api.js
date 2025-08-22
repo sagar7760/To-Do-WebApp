@@ -1,14 +1,17 @@
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 
-  (import.meta.env.PROD 
-    ? import.meta.env.VITE_API_URL || '/api'  // Use any available env var or fallback
-    : 'http://localhost:5000/api'
-  );
+const API_BASE_URL = import.meta.env.PROD
+  ? import.meta.env.VITE_BACKEND_URL // In production, this is set by Vercel.
+  : 'http://localhost:5000/api';     // In development, we use the local backend.
+
+// This check ensures that if you ever deploy to production without setting
+// the VITE_BACKEND_URL, the build will fail with a clear error message
+// instead of deploying a broken app.
+if (import.meta.env.PROD && !API_BASE_URL) {
+  throw new Error('VITE_BACKEND_URL is not defined for production. Please set it in your Vercel environment variables.');
+}
 
 // Only log in development
 if (import.meta.env.DEV) {
   console.log('Todo API Base URL:', API_BASE_URL);
-  console.log('VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
-  console.log('PROD:', import.meta.env.PROD);
 }
 
 class TodoAPI {
