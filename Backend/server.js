@@ -20,6 +20,9 @@ require('dotenv').config();
 // Security: Hide X-Powered-By header
 app.disable('x-powered-by');
 
+// FIX: Trust proxy for Heroku (must be BEFORE rate limiting)
+app.set('trust proxy', 1);
+
 // Log environment info for debugging (only in development)
 if (process.env.NODE_ENV === 'development') {
   console.log('Starting Taskly Backend...');
@@ -51,6 +54,7 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: true, // ✅ FIX: Trust proxy for Heroku
 });
 
 // Auth rate limiting (more strict)
@@ -62,6 +66,7 @@ const authLimiter = rateLimit({
     retryAfter: '15 minutes'
   },
   skipSuccessfulRequests: true,
+  trustProxy: true, // ✅ FIX: Trust proxy for Heroku
 });
 
 app.use(limiter);

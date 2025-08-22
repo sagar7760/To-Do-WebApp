@@ -1,8 +1,15 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 
   (import.meta.env.PROD 
-    ? process.env.VITE_API_URL || '/api'  // Fallback to relative URL
+    ? import.meta.env.VITE_API_URL || '/api'  // Use any available env var or fallback
     : 'http://localhost:5000/api'
   );
+
+// Only log in development
+if (import.meta.env.DEV) {
+  console.log('Todo API Base URL:', API_BASE_URL);
+  console.log('VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
+  console.log('PROD:', import.meta.env.PROD);
+}
 
 class TodoAPI {
   constructor() {
