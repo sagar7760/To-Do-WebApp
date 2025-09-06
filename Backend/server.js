@@ -84,7 +84,7 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
-  'https://talkly-coral.vercel.app/', // Your Vercel frontend URL
+  'https://talkly-coral.vercel.app', // Your  Vercel frontend URL (removed trailing slash)
 ];
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
